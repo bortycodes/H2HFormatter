@@ -28,6 +28,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     
     @Value("${input.dir}")
     private String inputDir;
+    @Value("${backup.dir}")
+    private String backupDir;
     
     @Override
     public void run(String... args) throws Exception {
@@ -60,7 +62,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
             System.out.println("Watch service closed, stopping listening for new files.");
         }
     }
-
+    
 	public static void main(String[] args) {
 		SpringApplication.run(H2HFormatterApplication.class, args);
 		System.out.println("H2H File Formatter Started.");
