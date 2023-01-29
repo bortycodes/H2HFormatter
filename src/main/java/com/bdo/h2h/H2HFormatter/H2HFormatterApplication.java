@@ -2,8 +2,10 @@ package com.bdo.h2h.H2HFormatter;
 
 import java.io.IOException;
 import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -53,7 +55,10 @@ public class H2HFormatterApplication implements CommandLineRunner{
             if (key != null) {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                        System.out.println("New file found: " + event.context().toString());
+                        //System.out.println("New file found: " + event.context().toString());
+                        String file= event.context().toString();
+                        System.out.println("New File found: " + file);
+                        processFile(file);
                     }
                 }
                 key.reset();
@@ -61,6 +66,18 @@ public class H2HFormatterApplication implements CommandLineRunner{
         } catch (ClosedWatchServiceException e) {
             System.out.println("Watch service closed, stopping listening for new files.");
         }
+    }
+    
+    private void processFile(String file) {
+    	Path originalPath = Paths.get(inputDir + "/" + file);
+    	Path backupPath = Paths.get(backupDir + "/" + file);
+    	try {
+			Files.copy(originalPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			System.out.println(inputDir + "/" + file + " backup failed.");
+			e.printStackTrace();
+		}
+
     }
     
 	public static void main(String[] args) {
