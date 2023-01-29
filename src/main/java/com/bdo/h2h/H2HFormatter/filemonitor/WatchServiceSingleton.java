@@ -7,8 +7,10 @@ import java.nio.file.WatchService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class WatchServiceFactory {
+public class WatchServiceSingleton {
 	private static WatchService watchService;
+	
+	private WatchServiceSingleton () {}
 	
 	public static WatchService getInstance() {
 		if (watchService == null) {
