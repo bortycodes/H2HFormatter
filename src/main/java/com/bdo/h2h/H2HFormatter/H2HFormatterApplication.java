@@ -55,10 +55,15 @@ public class H2HFormatterApplication implements CommandLineRunner{
             if (key != null) {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                        //System.out.println("New file found: " + event.context().toString());
-                        String file= event.context().toString();
+                        Path inputFileDir = (Path)key.watchable();
+                        System.out.println("Directory being watched: " + inputFileDir);
+                        
+                        Path filePath = inputFileDir.resolve((Path) event.context());
+                        
+                        String file = filePath.getFileName().toString();
                         System.out.println("New File found: " + file);
-                        processFile(file);
+                        
+                        processFile(filePath);
                     }
                 }
                 key.reset();
@@ -68,16 +73,19 @@ public class H2HFormatterApplication implements CommandLineRunner{
         }
     }
     
-    private void processFile(String file) {
-    	Path originalPath = Paths.get(inputDir + "/" + file);
-    	Path backupPath = Paths.get(backupDir + "/" + file);
+    private void processFile(Path file) {
+    	Path backupPath = Paths.get(backupDir + "/" + file.getFileName().toString());
     	try {
-			Files.copy(originalPath, backupPath, StandardCopyOption.REPLACE_EXISTING);
+			Files.copy(file, backupPath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
-			System.out.println(inputDir + "/" + file + " backup failed.");
+			System.out.println(file.getFileName().toString() + " backup failed.");
 			e.printStackTrace();
 		}
 
+    }
+    
+    private static void decryptFile() {
+    	
     }
     
 	public static void main(String[] args) {
