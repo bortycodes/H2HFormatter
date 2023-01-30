@@ -1,6 +1,8 @@
 package com.bdo.h2h.H2HFormatter;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -113,8 +115,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private void processFile(Path file) {
     	backupFile(file);
     	
-    	//decrypt file
-
+    	decryptFile(file, inputDir);
+    	
     }
 
 	public void backupFile(Path file) {
@@ -123,6 +125,45 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			Files.copy(file, backupPath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			System.out.println(file.getFileName().toString() + " backup failed.");
+			e.printStackTrace();
+		}
+	}
+	
+	public void decryptFile(Path file, String decryptedFileDirectory) {
+		String decryptedFileName = file.getFileName().toString().replace(".gpg", "");
+        String decryptedFilePath = decryptedFileDirectory + "/" + decryptedFileName;
+		
+		String command = "gpg --quiet --decrypt --output " + decryptedFilePath + " " + decryptedFileDirectory + "/" + file.getFileName().toString();
+		Process decryptFile;
+		try {
+			decryptFile = Runtime.getRuntime().exec(command);
+//			decryptFile.waitFor();
+			
+			// Redirect standard error output to a stream
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(decryptFile.getErrorStream()));
+
+			StringBuilder errorMessage = new StringBuilder();
+			String line;
+			while ((line = errorReader.readLine()) != null) {
+			    errorMessage.append(line).append("\n");
+			}
+
+			// Wait for the process to complete
+			int exitCode = decryptFile.waitFor();
+
+			if (exitCode != 0) {
+			    System.out.println("Decryption failed with exit code " + exitCode + " and error message:\n" + errorMessage);
+			} else {
+			    System.out.println("Decryption succeeded");
+			}
+			
+//			if (decryptFile.exitValue() == 0) {
+//			    System.out.println("Decrypted " + file.getFileName().toString());
+//			} else {
+//			    System.out.println(file.getFileName().toString() + " Decryption Failed.");
+//			}
+		} catch (IOException | InterruptedException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
