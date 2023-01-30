@@ -74,20 +74,22 @@ public class H2HFormatterApplication implements CommandLineRunner{
     }
     
     private void processFile(Path file) {
-    	Path backupPath = Paths.get(backupDir + "/" + file.getFileName().toString());
+    	backupFile(file);
+    	
+    	//decrypt file
+
+    }
+
+	public void backupFile(Path file) {
+		Path backupPath = Paths.get(backupDir + "/" + file.getFileName().toString()); 
     	try {
 			Files.copy(file, backupPath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			System.out.println(file.getFileName().toString() + " backup failed.");
 			e.printStackTrace();
 		}
+	}
 
-    }
-    
-    private static void decryptFile() {
-    	
-    }
-    
 	public static void main(String[] args) {
 		SpringApplication.run(H2HFormatterApplication.class, args);
 		System.out.println("H2H File Formatter Started.");
