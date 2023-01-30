@@ -32,6 +32,12 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private String inputDir;
     @Value("${backup.dir}")
     private String backupDir;
+    @Value("${gpg.key.dir}")
+    private String gpgKeyDir;
+    @Value("${gpg.key.public}")
+    private String publicKey;
+    @Value("${gpg.key.private}")
+    private String privateKey;
     
     @Override
     public void run(String... args) throws Exception {
@@ -46,6 +52,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 watchService = WatchServiceSingleton.getInstance();
                 dir.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Watch service started and directory is registered");
+                importGpgKeys();
             } catch (IOException e) {
                 System.err.println("Error initializing watch service: " + e.getMessage());
             }
@@ -71,6 +78,34 @@ public class H2HFormatterApplication implements CommandLineRunner{
         } catch (ClosedWatchServiceException e) {
             System.out.println("Watch service closed, stopping listening for new files.");
         }
+    }
+    
+    public void importGpgKeys() {
+    	System.out.println("Import GPG keys");
+    	String importPublicKey = "gpg --import " + gpgKeyDir + "/" + publicKey;
+		String importPrivateKey = "gpg --import " + gpgKeyDir + "/" + privateKey;
+		
+		try {
+			Process importPrivateKeyProcess = Runtime.getRuntime().exec(importPrivateKey);
+			Process importPublicKeyProcess = Runtime.getRuntime().exec(importPublicKey);
+			
+			if (importPrivateKeyProcess.waitFor() == 0) {
+			    System.out.println("Private Key Imported.");
+			} else {
+			    System.out.println("Private Key Import Failed.");
+			}
+
+			if (importPublicKeyProcess.waitFor() == 0) {
+			    System.out.println("Public Key Imported.");
+			} else {
+			    System.out.println("Public Key Import Failed.");
+			}
+
+		} catch (IOException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
     }
     
     private void processFile(Path file) {
