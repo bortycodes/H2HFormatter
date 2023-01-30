@@ -87,15 +87,17 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		
 		try {
 			Process importPrivateKeyProcess = Runtime.getRuntime().exec(importPrivateKey);
+			importPrivateKeyProcess.waitFor();
 			Process importPublicKeyProcess = Runtime.getRuntime().exec(importPublicKey);
+			importPublicKeyProcess.waitFor();
 			
-			if (importPrivateKeyProcess.waitFor() == 0) {
+			if (importPrivateKeyProcess.exitValue() == 0) {
 			    System.out.println("Private Key Imported.");
 			} else {
 			    System.out.println("Private Key Import Failed.");
 			}
 
-			if (importPublicKeyProcess.waitFor() == 0) {
+			if (importPublicKeyProcess.exitValue() == 0) {
 			    System.out.println("Public Key Imported.");
 			} else {
 			    System.out.println("Public Key Import Failed.");
