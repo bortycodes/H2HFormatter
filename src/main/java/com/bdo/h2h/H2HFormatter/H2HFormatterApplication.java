@@ -40,6 +40,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private String publicKey;
     @Value("${gpg.key.private}")
     private String privateKey;
+    @Value("${decrypted.dir}")
+    private String decryptedDir;
     
     @Override
     public void run(String... args) throws Exception {
@@ -115,7 +117,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private void processFile(Path file) {
     	backupFile(file);
     	
-    	decryptFile(file, inputDir);
+    	decryptFile(file);
     	
     }
 
@@ -129,11 +131,13 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		}
 	}
 	
-	public void decryptFile(Path file, String decryptedFileDirectory) {
+	public void decryptFile(Path file) {
 		String decryptedFileName = file.getFileName().toString().replace(".gpg", "");
-        String decryptedFilePath = decryptedFileDirectory + "/" + decryptedFileName;
+        String decryptedFilePath = decryptedDir + "/" + decryptedFileName;
 		
-		String command = "gpg --quiet --decrypt --output " + decryptedFilePath + " " + decryptedFileDirectory + "/" + file.getFileName().toString();
+//		String command = "gpg --quiet --decrypt --output " + decryptedFilePath + "/" + file.getFileName().toString();
+        String command = "gpg --decrypt --output \"" + decryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
+        System.out.println("decrypt command: " + command);
 		Process decryptFile;
 		try {
 			decryptFile = Runtime.getRuntime().exec(command);
@@ -154,7 +158,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			if (exitCode != 0) {
 			    System.out.println("Decryption failed with exit code " + exitCode + " and error message:\n" + errorMessage);
 			} else {
-			    System.out.println("Decryption succeeded");
+			    System.out.println("Decryption successful");
 			}
 			
 //			if (decryptFile.exitValue() == 0) {
