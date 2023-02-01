@@ -67,7 +67,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 Path dir = Paths.get(inputDir);
                 inputWatchService = InputWatchServiceSingleton.getInstance();
                 dir.register(inputWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Input Watch service started and directory is registered");
+                System.out.println("Watch service for input files started and directory is registered");
                 importPrivateKey();
             } catch (IOException e) {
                 System.err.println("Error initializing watch service: " + e.getMessage());
@@ -104,10 +104,10 @@ public class H2HFormatterApplication implements CommandLineRunner{
     	if(!shouldRun) return; // Use this to stop listening
         if(encryptWatchService == null){
         	try {
-                Path dir = Paths.get(decryptedDir);
+                Path dir = Paths.get(processedDir);
                 encryptWatchService = EncryptWatchServiceSingleton.getInstance();
                 dir.register(encryptWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Processed Files Watch service started and directory is registered");
+                System.out.println("Watch service for processed files started and directory is registered");
                 importPublicKey();
             } catch (IOException e) {
                 System.err.println("Error initializing watch service: " + e.getMessage());
@@ -118,10 +118,10 @@ public class H2HFormatterApplication implements CommandLineRunner{
             if (key != null) {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
-                        Path decryptedDir = (Path)key.watchable();
+                        Path processedDir = (Path)key.watchable();
 //                        System.out.println("Directory being watched: " + inputFileDir);
                         
-                        Path filePath = decryptedDir.resolve((Path) event.context());
+                        Path filePath = processedDir.resolve((Path) event.context());
                         
                         String file = filePath.getFileName().toString();
                         System.out.println("New File found: " + file);
