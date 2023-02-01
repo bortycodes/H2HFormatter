@@ -31,18 +31,21 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	private boolean shouldRun = true;
     private WatchService inputWatchService;
     
-    @Value("${input.dir}")
-    private String inputDir;
-    @Value("${backup.dir}")
-    private String backupDir;
     @Value("${gpg.key.dir}")
     private String gpgKeyDir;
     @Value("${gpg.key.public}")
     private String publicKey;
     @Value("${gpg.key.private}")
     private String privateKey;
+    
+    @Value("${input.dir}")
+    private String inputDir;
+    @Value("${backup.dir}")
+    private String backupDir;
     @Value("${decrypted.dir}")
     private String decryptedDir;
+    @Value("${output.dir}")
+    private String outputDir;
     
     private String separator = File.separator;
     
