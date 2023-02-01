@@ -1,6 +1,7 @@
 package com.bdo.h2h.H2HFormatter;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.ClosedWatchServiceException;
@@ -43,6 +44,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     @Value("${decrypted.dir}")
     private String decryptedDir;
     
+    private String separator = File.separator;
+    
     @Override
     public void run(String... args) throws Exception {
     }
@@ -67,7 +70,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
                         Path inputFileDir = (Path)key.watchable();
-                        System.out.println("Directory being watched: " + inputFileDir);
+//                        System.out.println("Directory being watched: " + inputFileDir);
                         
                         Path filePath = inputFileDir.resolve((Path) event.context());
                         
@@ -86,8 +89,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     
     public void importGpgKeys() {
     	System.out.println("Import GPG keys");
-    	String importPublicKey = "gpg --import " + gpgKeyDir + "/" + publicKey;
-		String importPrivateKey = "gpg --import " + gpgKeyDir + "/" + privateKey;
+    	String importPublicKey = "gpg --import " + gpgKeyDir + separator + publicKey;
+		String importPrivateKey = "gpg --import " + gpgKeyDir + separator + privateKey;
 		
 		try {
 			Process importPrivateKeyProcess = Runtime.getRuntime().exec(importPrivateKey);
@@ -122,7 +125,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
     }
 
 	public void backupFile(Path file) {
-		Path backupPath = Paths.get(backupDir + "/" + file.getFileName().toString()); 
+		Path backupPath = Paths.get(backupDir + separator + file.getFileName().toString()); 
     	try {
 			Files.copy(file, backupPath, StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
@@ -133,15 +136,13 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	
 	public void decryptFile(Path file) {
 		String decryptedFileName = file.getFileName().toString().replace(".gpg", "");
-        String decryptedFilePath = decryptedDir + "/" + decryptedFileName;
+        String decryptedFilePath = decryptedDir + separator + decryptedFileName;
 		
-//		String command = "gpg --quiet --decrypt --output " + decryptedFilePath + "/" + file.getFileName().toString();
         String command = "gpg --decrypt --output \"" + decryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
-        System.out.println("decrypt command: " + command);
+        
 		Process decryptFile;
 		try {
 			decryptFile = Runtime.getRuntime().exec(command);
-//			decryptFile.waitFor();
 			
 			// Redirect standard error output to a stream
 			BufferedReader errorReader = new BufferedReader(new InputStreamReader(decryptFile.getErrorStream()));
