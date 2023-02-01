@@ -84,7 +84,10 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         String file = filePath.getFileName().toString();
                         System.out.println("New File found: " + file);
                         
-                        processFile(filePath);
+//                        processFile(filePath);
+                        backupFile(filePath);
+                    	
+                    	decryptFile(filePath);
                     }
                 }
                 key.reset();
@@ -177,12 +180,12 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		
     }
     
-    private void processFile(Path file) {
-    	backupFile(file);
-    	
-    	decryptFile(file);
-    	
-    }
+//    private void processFile(Path file) {
+//    	backupFile(file);
+//    	
+//    	decryptFile(file);
+//    	
+//    }
 
 	public void backupFile(Path file) {
 		Path backupPath = Paths.get(backupDir + separator + file.getFileName().toString()); 
