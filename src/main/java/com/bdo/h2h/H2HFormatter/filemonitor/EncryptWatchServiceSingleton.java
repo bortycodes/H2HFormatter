@@ -12,7 +12,7 @@ public class EncryptWatchServiceSingleton {
 	
 	private EncryptWatchServiceSingleton() {}
 	
-	public WatchService getInstance() {
+	public static WatchService getInstance() {
 		if (watchService == null) {
 			try {
 				watchService = FileSystems.getDefault().newWatchService();

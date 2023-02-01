@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import com.bdo.h2h.H2HFormatter.filemonitor.EncryptWatchServiceSingleton;
 import com.bdo.h2h.H2HFormatter.filemonitor.InputWatchServiceSingleton;
 
 @SpringBootApplication
@@ -30,6 +31,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	
 	private boolean shouldRun = true;
     private WatchService inputWatchService;
+    private WatchService encryptWatchService;
     
     @Value("${gpg.key.dir}")
     private String gpgKeyDir;
@@ -37,6 +39,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private String publicKey;
     @Value("${gpg.key.private}")
     private String privateKey;
+    @Value("${gpg.recipient")
+    private String recipient;
     
     @Value("${input.dir}")
     private String inputDir;
@@ -61,7 +65,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 Path dir = Paths.get(inputDir);
                 inputWatchService = InputWatchServiceSingleton.getInstance();
                 dir.register(inputWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Watch service started and directory is registered");
+                System.out.println("Input Watch service started and directory is registered");
                 importGpgKeys();
             } catch (IOException e) {
                 System.err.println("Error initializing watch service: " + e.getMessage());
@@ -81,6 +85,43 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         System.out.println("New File found: " + file);
                         
                         processFile(filePath);
+                    }
+                }
+                key.reset();
+            }
+        } catch (ClosedWatchServiceException e) {
+            System.out.println("Watch service closed, stopping listening for new files.");
+        }
+    }
+    
+    @Scheduled(fixedRate = 1000)
+    public void listenForProcessedFiles() throws InterruptedException {
+    	if(!shouldRun) return; // Use this to stop listening
+        if(encryptWatchService == null){
+        	try {
+                Path dir = Paths.get(decryptedDir);
+                encryptWatchService = EncryptWatchServiceSingleton.getInstance();
+                dir.register(encryptWatchService, StandardWatchEventKinds.ENTRY_CREATE);
+                System.out.println("Processed Files Watch service started and directory is registered");
+                importGpgKeys();
+            } catch (IOException e) {
+                System.err.println("Error initializing watch service: " + e.getMessage());
+            }
+        }
+        try {
+            WatchKey key = encryptWatchService.poll(1, TimeUnit.SECONDS);
+            if (key != null) {
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+                        Path decryptedDir = (Path)key.watchable();
+//                        System.out.println("Directory being watched: " + inputFileDir);
+                        
+                        Path filePath = decryptedDir.resolve((Path) event.context());
+                        
+                        String file = filePath.getFileName().toString();
+                        System.out.println("New File found: " + file);
+                        
+                        encryptFile(filePath);
                     }
                 }
                 key.reset();
@@ -162,19 +203,50 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			}
 
 			// Wait for the process to complete
-			int exitCode = decryptFile.waitFor();
+			decryptFile.waitFor();
 
-			if (exitCode != 0) {
-			    System.out.println("Decryption failed with exit code " + exitCode + " and error message:\n" + errorMessage);
+			if (decryptFile.exitValue() == 0) {
+				System.out.println("Decryption successful");
 			} else {
-			    System.out.println("Decryption successful");
+			    System.out.println("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
 			}
+		} catch (IOException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	
+	
+	public void encryptFile(Path file) {
+		importGpgKeys();
+		String suffix = ".gpg";
+		String encryptedFileName = file.getFileName().toString() + suffix;
+        String encryptedFilePath = outputDir + separator + encryptedFileName;
+		System.out.println("EMAIL: " + recipient);
+        String command = "gpg --trust-model always --encrypt -r " + recipient + " --output \"" + encryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
+        System.out.println("encryption: " + command);
+		Process encryptFile;
+		try {
+			encryptFile = Runtime.getRuntime().exec(command);
 			
-//			if (decryptFile.exitValue() == 0) {
-//			    System.out.println("Decrypted " + file.getFileName().toString());
-//			} else {
-//			    System.out.println(file.getFileName().toString() + " Decryption Failed.");
-//			}
+			// Redirect standard error output to a stream
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(encryptFile.getErrorStream()));
+
+			StringBuilder errorMessage = new StringBuilder();
+			String line;
+			while ((line = errorReader.readLine()) != null) {
+			    errorMessage.append(line).append("\n");
+			}
+
+			// Wait for the process to complete
+			encryptFile.waitFor();
+
+			if (encryptFile.exitValue() == 0) {
+				System.out.println("Encryption successful");
+			} else {
+				System.out.println("Encryption failed with exit code " + encryptFile.exitValue() + " and error message:\n" + errorMessage);
+			}
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
