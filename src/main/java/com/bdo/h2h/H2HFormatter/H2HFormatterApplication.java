@@ -48,6 +48,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private String backupDir;
     @Value("${decrypted.dir}")
     private String decryptedDir;
+    @Value("${processed.dir}")
+    private String processedDir;
     @Value("${output.dir}")
     private String outputDir;
     
