@@ -66,7 +66,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 inputWatchService = InputWatchServiceSingleton.getInstance();
                 dir.register(inputWatchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Input Watch service started and directory is registered");
-                importGpgKeys();
+                importPrivateKey();
             } catch (IOException e) {
                 System.err.println("Error initializing watch service: " + e.getMessage());
             }
@@ -103,7 +103,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 encryptWatchService = EncryptWatchServiceSingleton.getInstance();
                 dir.register(encryptWatchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Processed Files Watch service started and directory is registered");
-                importGpgKeys();
+                importPublicKey();
             } catch (IOException e) {
                 System.err.println("Error initializing watch service: " + e.getMessage());
             }
@@ -131,9 +131,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
         }
     }
     
-    public void importGpgKeys() {
-    	System.out.println("Import GPG keys");
-    	String importPublicKey = "gpg --import " + gpgKeyDir + separator + publicKey;
+    public void importPrivateKey() {
+    	System.out.println("Import GPG Private Key");
 		String importPrivateKey = "gpg --import " + gpgKeyDir + separator + privateKey;
 		
 		try {
@@ -147,7 +146,19 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			    System.out.println("Terminate H2H File Formatter.");
 			    System.exit(1);
 			}
-			
+
+		} catch (IOException | InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+    }
+    
+    public void importPublicKey() {
+    	System.out.println("Import GPG Public Key");
+    	String importPublicKey = "gpg --import " + gpgKeyDir + separator + publicKey;
+		
+		try {
 			Process importPublicKeyProcess = Runtime.getRuntime().exec(importPublicKey);
 			
 			importPublicKeyProcess.waitFor();
