@@ -13,7 +13,9 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -22,6 +24,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import com.bdo.h2h.H2HFormatter.filemonitor.DecryptedFilesWatchService;
 import com.bdo.h2h.H2HFormatter.filemonitor.EncryptWatchServiceSingleton;
 import com.bdo.h2h.H2HFormatter.filemonitor.InputWatchServiceSingleton;
 
@@ -32,6 +35,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	private boolean shouldRun = true;
     private WatchService inputWatchService;
     private WatchService encryptWatchService;
+    private WatchService decryptedFilesWatchService;
     
     @Value("${gpg.key.dir}")
     private String gpgKeyDir;
@@ -90,6 +94,65 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         backupFile(filePath);
                     	
                     	decryptFile(filePath);
+                    }
+                }
+                key.reset();
+            }
+        } catch (ClosedWatchServiceException e) {
+            System.out.println("Watch service closed, stopping listening for new files.");
+        }
+    }
+
+    @Scheduled(fixedRate = 1000)
+    public void listenForDecryptedFiles() throws InterruptedException {
+    	if(!shouldRun) return; // Use this to stop listening
+        if(decryptedFilesWatchService == null){
+        	try {
+                Path dir = Paths.get(decryptedDir);
+                decryptedFilesWatchService = DecryptedFilesWatchService.getInstance();
+                dir.register(decryptedFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
+                System.out.println("Listening for decrypted files.");
+            } catch (IOException e) {
+                System.err.println("Error initializing decrypted files watch service: " + e.getMessage());
+            }
+        }
+        try {
+            WatchKey key = decryptedFilesWatchService.poll(1, TimeUnit.SECONDS);
+            if (key != null) {
+                for (WatchEvent<?> event : key.pollEvents()) {
+                    if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
+                        Path decryptedDir = (Path)key.watchable();
+//                        System.out.println("Directory being watched: " + inputFileDir);
+                        
+                        Path filePath = decryptedDir.resolve((Path) event.context());
+                        
+//                        String file = filePath.getFileName().toString();
+//                        System.out.println("New File found: " + file);
+                        
+                        Path path = Paths.get(decryptedDir);
+                        
+                        //process file
+                        Path newFile = (Path) event.context();
+                        Path fullPath = path.resolve(newFile);
+                        File file = fullPath.toFile();
+                        // process the file
+                        List<String> lines = Files.readAllLines(fullPath);
+                        List<String> updatedLines = lines.stream()
+                                .map(line -> {
+                                    if (line.startsWith("D") && line.split("\\|").length < 24) {
+                                        int difference = 24 - line.split("\\|").length;
+                                        StringBuilder sb = new StringBuilder(line);
+                                        for (int i = 0; i < difference; i++) {
+                                            sb.append("|");
+                                        }
+                                        return sb.toString();
+                                    }
+                                    return line;
+                                })
+                                .collect(Collectors.toList());
+                        Files.write(fullPath, updatedLines);
+                        // move the file to the processed directory
+                        Files.move(fullPath, Paths.get(processedDir, newFile.toString()));
                     }
                 }
                 key.reset();
