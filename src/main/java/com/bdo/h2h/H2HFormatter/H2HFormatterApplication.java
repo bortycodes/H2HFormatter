@@ -22,14 +22,14 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import com.bdo.h2h.H2HFormatter.filemonitor.WatchServiceSingleton;
+import com.bdo.h2h.H2HFormatter.filemonitor.InputWatchServiceSingleton;
 
 @SpringBootApplication
 @EnableScheduling
 public class H2HFormatterApplication implements CommandLineRunner{
 	
 	private boolean shouldRun = true;
-    private WatchService watchService;
+    private WatchService inputWatchService;
     
     @Value("${input.dir}")
     private String inputDir;
@@ -53,11 +53,11 @@ public class H2HFormatterApplication implements CommandLineRunner{
     @Scheduled(fixedRate = 1000)
     public void listenForNewFiles() throws InterruptedException {
     	if(!shouldRun) return; // Use this to stop listening
-        if(watchService == null){
+        if(inputWatchService == null){
         	try {
                 Path dir = Paths.get(inputDir);
-                watchService = WatchServiceSingleton.getInstance();
-                dir.register(watchService, StandardWatchEventKinds.ENTRY_CREATE);
+                inputWatchService = InputWatchServiceSingleton.getInstance();
+                dir.register(inputWatchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Watch service started and directory is registered");
                 importGpgKeys();
             } catch (IOException e) {
@@ -65,7 +65,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
             }
         }
         try {
-            WatchKey key = watchService.poll(1, TimeUnit.SECONDS);
+            WatchKey key = inputWatchService.poll(1, TimeUnit.SECONDS);
             if (key != null) {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
