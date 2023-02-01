@@ -219,11 +219,11 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	
 	
 	public void encryptFile(Path file) {
-		importGpgKeys();
 		String suffix = ".gpg";
 		String encryptedFileName = file.getFileName().toString() + suffix;
         String encryptedFilePath = outputDir + separator + encryptedFileName;
-		System.out.println("EMAIL: " + recipient);
+        recipient = "gpborla@gmail.com"; //temporary solultion
+//		System.out.println("EMAIL: " + recipient);
         String command = "gpg --trust-model always --encrypt -r " + recipient + " --output \"" + encryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
         System.out.println("encryption: " + command);
 		Process encryptFile;
