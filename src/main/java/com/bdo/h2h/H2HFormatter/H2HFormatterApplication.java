@@ -94,20 +94,25 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		
 		try {
 			Process importPrivateKeyProcess = Runtime.getRuntime().exec(importPrivateKey);
-			importPrivateKeyProcess.waitFor();
-			Process importPublicKeyProcess = Runtime.getRuntime().exec(importPublicKey);
-			importPublicKeyProcess.waitFor();
 			
+			importPrivateKeyProcess.waitFor();
 			if (importPrivateKeyProcess.exitValue() == 0) {
 			    System.out.println("Private Key Imported.");
 			} else {
 			    System.out.println("Private Key Import Failed.");
+			    System.out.println("Terminate H2H File Formatter.");
+			    System.exit(1);
 			}
-
+			
+			Process importPublicKeyProcess = Runtime.getRuntime().exec(importPublicKey);
+			
+			importPublicKeyProcess.waitFor();
 			if (importPublicKeyProcess.exitValue() == 0) {
 			    System.out.println("Public Key Imported.");
 			} else {
 			    System.out.println("Public Key Import Failed.");
+			    System.out.println("Terminate H2H File Formatter.");
+			    System.exit(1);
 			}
 
 		} catch (IOException | InterruptedException e) {
