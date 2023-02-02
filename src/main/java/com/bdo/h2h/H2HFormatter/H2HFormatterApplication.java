@@ -129,7 +129,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 //                        String file = filePath.getFileName().toString();
 //                        System.out.println("New File found: " + file);
                         
-                        Path path = Paths.get(decryptedDir);
+                        Path path = Paths.get(decryptedDir.toUri());
                         
                         //process file
                         Path newFile = (Path) event.context();
@@ -140,7 +140,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         List<String> updatedLines = lines.stream()
                                 .map(line -> {
                                     if (line.startsWith("D") && line.split("\\|").length < 24) {
-                                        int difference = 24 - line.split("\\|").length;
+                                        int difference = 25 - line.split("\\|").length;
                                         StringBuilder sb = new StringBuilder(line);
                                         for (int i = 0; i < difference; i++) {
                                             sb.append("|");
@@ -158,8 +158,12 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
-            System.out.println("Watch service closed, stopping listening for new files.");
-        }
+        	e.printStackTrace();
+            System.out.println("Watch service for decrypted files closed, stopping listening for new decrypted files.");
+        } catch (IOException e) {
+			System.out.println("Error in processing file.");
+			e.printStackTrace();
+		}
     }
     
     @Scheduled(fixedRate = 1000)
@@ -304,7 +308,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
         recipient = "gpborla@gmail.com"; //temporary solultion
 //		System.out.println("EMAIL: " + recipient);
         String command = "gpg --trust-model always --encrypt -r " + recipient + " --output \"" + encryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
-        System.out.println("encryption: " + command);
+//        System.out.println("encryption: " + command);
 		Process encryptFile;
 		try {
 			encryptFile = Runtime.getRuntime().exec(command);
