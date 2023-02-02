@@ -7,10 +7,10 @@ import java.nio.file.WatchService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class InputFilesWatchServiceSingleton {
+public class InputFilesWatchService {
 	private static WatchService watchService;
 	
-	private InputFilesWatchServiceSingleton () {}
+	private InputFilesWatchService () {}
 	
 	public static WatchService getInstance() {
 		if (watchService == null) {

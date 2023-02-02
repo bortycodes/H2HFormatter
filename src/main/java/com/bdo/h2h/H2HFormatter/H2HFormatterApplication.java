@@ -26,7 +26,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import com.bdo.h2h.H2HFormatter.filemonitor.DecryptedFilesWatchService;
 import com.bdo.h2h.H2HFormatter.filemonitor.ProcessedFilesWatchService;
-import com.bdo.h2h.H2HFormatter.filemonitor.InputFilesWatchServiceSingleton;
+import com.bdo.h2h.H2HFormatter.filemonitor.InputFilesWatchService;
 
 @SpringBootApplication
 @EnableScheduling
@@ -69,7 +69,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
         if(inputFilesWatchService == null){
         	try {
                 Path dir = Paths.get(inputDir);
-                inputFilesWatchService = InputFilesWatchServiceSingleton.getInstance();
+                inputFilesWatchService = InputFilesWatchService.getInstance();
                 dir.register(inputFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Watch service for input files started.");
                 System.out.println("Listening for new input files in " + inputDir);
