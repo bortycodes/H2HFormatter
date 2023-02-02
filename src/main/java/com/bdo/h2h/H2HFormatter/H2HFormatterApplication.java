@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -25,12 +27,14 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.bdo.h2h.H2HFormatter.filemonitor.DecryptedFilesWatchService;
-import com.bdo.h2h.H2HFormatter.filemonitor.ProcessedFilesWatchService;
 import com.bdo.h2h.H2HFormatter.filemonitor.InputFilesWatchService;
+import com.bdo.h2h.H2HFormatter.filemonitor.ProcessedFilesWatchService;
 
 @SpringBootApplication
 @EnableScheduling
 public class H2HFormatterApplication implements CommandLineRunner{
+	
+	private static final Logger LOG = LogManager.getLogger(H2HFormatterApplication.class);
 	
 	private boolean shouldRun = true;
     private WatchService inputFilesWatchService;
@@ -89,6 +93,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         
                         String file = filePath.getFileName().toString();
                         System.out.println("New File found: " + file);
+                        LOG.info("New File found: " + file);
                         
                         backupFile(filePath);
                     }
@@ -343,6 +348,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	public static void main(String[] args) {
 		SpringApplication.run(H2HFormatterApplication.class, args);
 		System.out.println("H2H File Formatter Started.");
+		LOG.info("H2H File Formatter Started.");
 	}
 
 }
