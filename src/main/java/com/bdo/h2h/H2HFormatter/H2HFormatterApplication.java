@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import com.bdo.h2h.H2HFormatter.filemonitor.DecryptedFilesWatchService;
-import com.bdo.h2h.H2HFormatter.filemonitor.EncryptWatchServiceSingleton;
+import com.bdo.h2h.H2HFormatter.filemonitor.ProcessedFilesWatchService;
 import com.bdo.h2h.H2HFormatter.filemonitor.InputFilesWatchServiceSingleton;
 
 @SpringBootApplication
@@ -34,7 +34,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	
 	private boolean shouldRun = true;
     private WatchService inputFilesWatchService;
-    private WatchService encryptWatchService;
+    private WatchService processedFilesWatchService;
     private WatchService decryptedFilesWatchService;
     
     @Value("${gpg.key.dir}")
@@ -166,19 +166,20 @@ public class H2HFormatterApplication implements CommandLineRunner{
     @Scheduled(fixedRate = 1000)
     public void listenForProcessedFiles() throws InterruptedException {
     	if(!shouldRun) return; // Use this to stop listening
-        if(encryptWatchService == null){
+        if(processedFilesWatchService == null){
         	try {
                 Path dir = Paths.get(processedDir);
-                encryptWatchService = EncryptWatchServiceSingleton.getInstance();
-                dir.register(encryptWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Watch service for processed files started and directory is registered");
+                processedFilesWatchService = ProcessedFilesWatchService.getInstance();
+                dir.register(processedFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
+                System.out.println("Watch service for processed files started.");
+                System.out.println("Listening for processed files in " + processedDir);
                 importPublicKey();
             } catch (IOException e) {
-                System.err.println("Error initializing watch service: " + e.getMessage());
+                System.err.println("Error initializing watch service for processed files: " + e.getMessage());
             }
         }
         try {
-            WatchKey key = encryptWatchService.poll(1, TimeUnit.SECONDS);
+            WatchKey key = processedFilesWatchService.poll(1, TimeUnit.SECONDS);
             if (key != null) {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
@@ -335,6 +336,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
 
 			if (encryptFile.exitValue() == 0) {
 				System.out.println("Encryption successful");
+				System.out.println("Deleting " + file.getFileName().toString());
+				deleteFile(file);
 			} else {
 				System.out.println("Encryption failed with exit code " + encryptFile.exitValue() + " and error message:\n" + errorMessage);
 			}

@@ -7,10 +7,10 @@ import java.nio.file.WatchService;
 import org.springframework.stereotype.Component;
 
 @Component
-public class EncryptWatchServiceSingleton {
+public class ProcessedFilesWatchService {
 	private static WatchService watchService;
 	
-	private EncryptWatchServiceSingleton() {}
+	private ProcessedFilesWatchService() {}
 	
 	public static WatchService getInstance() {
 		if (watchService == null) {
@@ -18,7 +18,7 @@ public class EncryptWatchServiceSingleton {
 				watchService = FileSystems.getDefault().newWatchService();
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Error initializing encrypted files watch service", e);
+				throw new RuntimeException("Error initializing processed files watch service", e);
 			}
 		}
 		return watchService;
