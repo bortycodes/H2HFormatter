@@ -75,7 +75,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 System.out.println("Listening for new input files in " + inputDir);
                 importPrivateKey();
             } catch (IOException e) {
-                System.err.println("Error initializing input files watch service: " + e.getMessage());
+                System.err.println("Error initializing Watch Service for input files: " + e.getMessage());
             }
         }
         try {
@@ -96,7 +96,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
-            System.out.println("Watch service closed, stopping listening for new files.");
+            System.out.println("Watch Service for input files closed, stopping listening for input files.");
         }
     }
 
@@ -125,6 +125,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         
 //                        String file = filePath.getFileName().toString();
 //                        System.out.println("New File found: " + file);
+                        System.out.println("Processing " + filePath.getFileName().toString() + "...");
                         
                         Path path = Paths.get(decryptedDir.toUri());
                         
@@ -150,13 +151,14 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         Files.write(fullPath, updatedLines);
                         // move the file to the processed directory
                         Files.move(fullPath, Paths.get(processedDir, newFile.toString()));
+                        System.out.println("Processed " + filePath.getFileName().toString());
                     }
                 }
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
         	e.printStackTrace();
-            System.out.println("Watch service for decrypted files closed, stopping listening for new decrypted files.");
+            System.out.println("Watch Service for decrypted files closed, stopping listening for decrypted files.");
         } catch (IOException e) {
 			System.out.println("Error in processing file.");
 			e.printStackTrace();
@@ -175,7 +177,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 System.out.println("Listening for processed files in " + processedDir);
                 importPublicKey();
             } catch (IOException e) {
-                System.err.println("Error initializing watch service for processed files: " + e.getMessage());
+                System.err.println("Error initializing Watch Service for processed files: " + e.getMessage());
             }
         }
         try {
@@ -197,7 +199,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
-            System.out.println("Watch service closed, stopping listening for new files.");
+            System.out.println("Watch Service for processed files closed, stopping listening for processed files.");
         }
     }
     
@@ -246,13 +248,6 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		}
 		
     }
-    
-//    private void processFile(Path file) {
-//    	backupFile(file);
-//    	
-//    	decryptFile(file);
-//    	
-//    }
 
 	public void backupFile(Path file) {
 		Path backupPath = Paths.get(backupDir + separator + file.getFileName().toString()); 
@@ -307,8 +302,6 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			e.printStackTrace();
 		}
 	}
-	
-	
 	
 	public void encryptFile(Path file) {
 		String suffix = ".gpg";
