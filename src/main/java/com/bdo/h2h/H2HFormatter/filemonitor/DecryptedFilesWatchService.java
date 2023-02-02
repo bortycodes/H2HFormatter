@@ -16,7 +16,7 @@ public class DecryptedFilesWatchService {
 				watchService = FileSystems.getDefault().newWatchService();
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Error initializing watch service", e);
+				throw new RuntimeException("Error initializing decrypted files watch service", e);
 			}
 		}
 		return watchService;

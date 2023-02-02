@@ -18,7 +18,7 @@ public class InputWatchServiceSingleton {
 				watchService = FileSystems.getDefault().newWatchService();
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Error initializing watch service", e);
+				throw new RuntimeException("Error initializing input watch service", e);
 			}
 		}
 		return watchService;

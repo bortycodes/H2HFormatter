@@ -18,7 +18,7 @@ public class FormatWatchServiceSingleton {
 				watchService = FileSystems.getDefault().newWatchService();
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Error initializing watch service", e);
+				throw new RuntimeException("Error initializing watch service for files to be processed", e);
 			}
 		}
 		return watchService;
