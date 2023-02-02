@@ -71,7 +71,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 Path dir = Paths.get(inputDir);
                 inputFilesWatchService = InputFilesWatchServiceSingleton.getInstance();
                 dir.register(inputFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Watch service for input files started and directory is registered");
+                System.out.println("Watch service for input files started.");
+                System.out.println("Listening for new input files in " + inputDir);
                 importPrivateKey();
             } catch (IOException e) {
                 System.err.println("Error initializing input files watch service: " + e.getMessage());
@@ -83,17 +84,13 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
                         Path inputFileDir = (Path)key.watchable();
-//                        System.out.println("Directory being watched: " + inputFileDir);
                         
                         Path filePath = inputFileDir.resolve((Path) event.context());
                         
                         String file = filePath.getFileName().toString();
                         System.out.println("New File found: " + file);
                         
-//                        processFile(filePath);
                         backupFile(filePath);
-                    	
-                    	decryptFile(filePath);
                     }
                 }
                 key.reset();
@@ -260,10 +257,19 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		Path backupPath = Paths.get(backupDir + separator + file.getFileName().toString()); 
     	try {
 			Files.copy(file, backupPath, StandardCopyOption.REPLACE_EXISTING);
+			decryptFile(file);
 		} catch (IOException e) {
 			System.out.println(file.getFileName().toString() + " backup failed.");
 			e.printStackTrace();
 		}
+	}
+	
+	public void deleteFile(Path file) {
+		try {
+            Files.delete(file);
+        } catch (IOException e) {
+            System.out.println("Unable to delete " + file.getFileName().toString() + " " + e.getMessage());
+        }
 	}
 	
 	public void decryptFile(Path file) {
@@ -290,6 +296,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
 
 			if (decryptFile.exitValue() == 0) {
 				System.out.println("Decryption successful");
+				System.out.println("Deleting " + file.getFileName().toString());
+				deleteFile(file);
 			} else {
 			    System.out.println("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
 			}
