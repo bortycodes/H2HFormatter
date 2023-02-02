@@ -108,9 +108,10 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 Path dir = Paths.get(decryptedDir);
                 decryptedFilesWatchService = DecryptedFilesWatchService.getInstance();
                 dir.register(decryptedFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Listening for decrypted files.");
+                System.out.println("Watch Service for decrypted files started.");
+                System.out.println("Listening for decrypted files in " + decryptedDir);
             } catch (IOException e) {
-                System.err.println("Error initializing decrypted files watch service: " + e.getMessage());
+                System.err.println("Error initializing Watch Service for decrypted files: " + e.getMessage());
             }
         }
         try {
@@ -119,7 +120,6 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
                         Path decryptedDir = (Path)key.watchable();
-//                        System.out.println("Directory being watched: " + inputFileDir);
                         
                         Path filePath = decryptedDir.resolve((Path) event.context());
                         
