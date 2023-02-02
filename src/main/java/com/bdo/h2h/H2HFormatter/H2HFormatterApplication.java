@@ -26,14 +26,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 
 import com.bdo.h2h.H2HFormatter.filemonitor.DecryptedFilesWatchService;
 import com.bdo.h2h.H2HFormatter.filemonitor.EncryptWatchServiceSingleton;
-import com.bdo.h2h.H2HFormatter.filemonitor.InputWatchServiceSingleton;
+import com.bdo.h2h.H2HFormatter.filemonitor.InputFilesWatchServiceSingleton;
 
 @SpringBootApplication
 @EnableScheduling
 public class H2HFormatterApplication implements CommandLineRunner{
 	
 	private boolean shouldRun = true;
-    private WatchService inputWatchService;
+    private WatchService inputFilesWatchService;
     private WatchService encryptWatchService;
     private WatchService decryptedFilesWatchService;
     
@@ -66,19 +66,19 @@ public class H2HFormatterApplication implements CommandLineRunner{
     @Scheduled(fixedRate = 1000)
     public void listenForNewFiles() throws InterruptedException {
     	if(!shouldRun) return; // Use this to stop listening
-        if(inputWatchService == null){
+        if(inputFilesWatchService == null){
         	try {
                 Path dir = Paths.get(inputDir);
-                inputWatchService = InputWatchServiceSingleton.getInstance();
-                dir.register(inputWatchService, StandardWatchEventKinds.ENTRY_CREATE);
+                inputFilesWatchService = InputFilesWatchServiceSingleton.getInstance();
+                dir.register(inputFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Watch service for input files started and directory is registered");
                 importPrivateKey();
             } catch (IOException e) {
-                System.err.println("Error initializing watch service: " + e.getMessage());
+                System.err.println("Error initializing input files watch service: " + e.getMessage());
             }
         }
         try {
-            WatchKey key = inputWatchService.poll(1, TimeUnit.SECONDS);
+            WatchKey key = inputFilesWatchService.poll(1, TimeUnit.SECONDS);
             if (key != null) {
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
