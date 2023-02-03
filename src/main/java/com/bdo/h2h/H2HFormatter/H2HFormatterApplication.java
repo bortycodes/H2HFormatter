@@ -76,10 +76,12 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 inputFilesWatchService = InputFilesWatchService.getInstance();
                 dir.register(inputFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
                 System.out.println("Watch service for input files started.");
-                System.out.println("Listening for new input files in " + inputDir);
+                System.out.println("Listening for input files in " + inputDir);
                 importPrivateKey();
             } catch (IOException e) {
                 System.err.println("Error initializing Watch Service for input files: " + e.getMessage());
+                System.out.println("Terminate H2H File Formatter.");
+			    System.exit(1);
             }
         }
         try {
@@ -117,6 +119,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 System.out.println("Listening for decrypted files in " + decryptedDir);
             } catch (IOException e) {
                 System.err.println("Error initializing Watch Service for decrypted files: " + e.getMessage());
+                System.out.println("Terminate H2H File Formatter.");
+			    System.exit(1);
             }
         }
         try {
@@ -183,6 +187,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 importPublicKey();
             } catch (IOException e) {
                 System.err.println("Error initializing Watch Service for processed files: " + e.getMessage());
+                System.out.println("Terminate H2H File Formatter.");
+			    System.exit(1);
             }
         }
         try {
