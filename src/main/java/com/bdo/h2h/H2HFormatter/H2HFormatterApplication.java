@@ -268,6 +268,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		} catch (IOException e) {
 			System.out.println(file.getFileName().toString() + " backup failed.");
 			e.printStackTrace();
+			System.out.println("Terminate H2H File Formatter.");
+		    System.exit(1);
 		}
 	}
 	
@@ -344,6 +346,8 @@ public class H2HFormatterApplication implements CommandLineRunner{
 				deleteFile(file);
 			} else {
 				System.out.println("Encryption failed with exit code " + encryptFile.exitValue() + " and error message:\n" + errorMessage);
+				System.out.println("Terminate H2H File Formatter.");
+			    System.exit(1);
 			}
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
