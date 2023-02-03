@@ -97,7 +97,14 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         System.out.println("New File found: " + file);
                         LOG.info("New File found: " + file);
                         
-                        backupFile(filePath);
+                        String fileType = null;
+                        int dotIndex = file.lastIndexOf(".");
+                        if (dotIndex != -1) {
+                            fileType = file.substring(dotIndex + 1);
+                        }
+                        
+                        if ("gpg".equals(fileType))
+                        	backupFile(filePath);
                     }
                 }
                 key.reset();
