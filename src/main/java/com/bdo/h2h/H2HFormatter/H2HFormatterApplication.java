@@ -316,6 +316,11 @@ public class H2HFormatterApplication implements CommandLineRunner{
 				deleteFile(file);
 			} else {
 			    System.out.println("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
+			    LOG.info("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
+			    Path backUpDir = Paths.get(backupDir);
+			    file = backUpDir.resolve(file.getFileName().toString());
+			    deleteFile(file);
+			    LOG.info("Deleted " + file.getFileName().toString() + " from " + file.getParent());
 			}
 		} catch (IOException | InterruptedException e) {
 			// TODO Auto-generated catch block
