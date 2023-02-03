@@ -18,7 +18,7 @@ public class InputFilesWatchService {
 				watchService = FileSystems.getDefault().newWatchService();
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new RuntimeException("Error initializing input watch service", e);
+				throw new RuntimeException("Error initializing input files watch service", e);
 			}
 		}
 		return watchService;
