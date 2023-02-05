@@ -94,7 +94,13 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         Path filePath = inputFileDir.resolve((Path) event.context());
                         
                         String file = filePath.getFileName().toString();
-                        System.out.println("New File found: " + file);
+                        
+                        if (file.equalsIgnoreCase("shutdown-h2h.txt")) {
+                        		LOG.info("Shutdown file received.");
+                        		LOG.info("H2H Formatter Terminated.");
+                        		System.exit(0);
+                        }
+                        
                         LOG.info("New File found: " + file);
                         
                         String fileType = null;
