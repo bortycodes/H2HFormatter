@@ -37,9 +37,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 	private static final Logger LOG = LogManager.getLogger(H2HFormatterApplication.class);
 	
 	private boolean shouldRun = true;
-    private WatchService inputFilesWatchService;
-    private WatchService processedFilesWatchService;
-    private WatchService decryptedFilesWatchService;
+    private WatchService inputFilesWatchService, decryptedFilesWatchService, processedFilesWatchService;
     
     @Value("${gpg.key.dir}")
     private String gpgKeyDir;
@@ -69,18 +67,18 @@ public class H2HFormatterApplication implements CommandLineRunner{
 
     @Scheduled(fixedRate = 1000)
     public void listenForNewFiles() throws InterruptedException {
-    	if(!shouldRun) return; // Use this to stop listening
-        if(inputFilesWatchService == null){
+    	if (!shouldRun) return; // Use this to stop listening
+        if (inputFilesWatchService == null) {
         	try {
                 Path dir = Paths.get(inputDir);
                 inputFilesWatchService = InputFilesWatchService.getInstance();
                 dir.register(inputFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Watch service for input files started.");
-                System.out.println("Listening for input files in " + inputDir);
+                LOG.info("Watch service for input files started.");
+                LOG.info("Listening for input files in " + inputDir);
                 importPrivateKey();
             } catch (IOException e) {
-                System.err.println("Error initializing Watch Service for input files: " + e.getMessage());
-                System.out.println("Terminate H2H File Formatter.");
+                LOG.error("Error initializing Watch Service for input files: " + e.getMessage());
+                LOG.info("Terminate H2H File Formatter.");
 			    System.exit(1);
             }
         }
@@ -95,7 +93,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         
                         String file = filePath.getFileName().toString();
                         
-                        if (file.equalsIgnoreCase("shutdown-h2h.txt")) {
+                        if ("shutdown-h2h.txt".equalsIgnoreCase(file)) {
                         		LOG.info("Shutdown file received.");
                         		LOG.info("H2H Formatter Terminated.");
                         		System.exit(0);
@@ -109,30 +107,30 @@ public class H2HFormatterApplication implements CommandLineRunner{
                             fileType = file.substring(dotIndex + 1);
                         }
                         
-                        if ("gpg".equals(fileType))
+                        if ("gpg".equalsIgnoreCase(fileType))
                         	backupFile(filePath);
                     }
                 }
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
-            System.out.println("Watch Service for input files closed, stopping listening for input files.");
+            LOG.error("Watch Service for input files closed, stopping listening for input files.");
         }
     }
 
     @Scheduled(fixedRate = 1000)
     public void listenForDecryptedFiles() throws InterruptedException {
-    	if(!shouldRun) return; // Use this to stop listening
-        if(decryptedFilesWatchService == null){
+    	if (!shouldRun) return; // Use this to stop listening
+        if (decryptedFilesWatchService == null) {
         	try {
                 Path dir = Paths.get(decryptedDir);
                 decryptedFilesWatchService = DecryptedFilesWatchService.getInstance();
                 dir.register(decryptedFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Watch Service for decrypted files started.");
-                System.out.println("Listening for decrypted files in " + decryptedDir);
+                LOG.info("Watch Service for decrypted files started.");
+                LOG.info("Listening for decrypted files in " + decryptedDir);
             } catch (IOException e) {
-                System.err.println("Error initializing Watch Service for decrypted files: " + e.getMessage());
-                System.out.println("Terminate H2H File Formatter.");
+                LOG.error("Error initializing Watch Service for decrypted files: " + e.getMessage());
+                LOG.info("Terminate H2H File Formatter.");
 			    System.exit(1);
             }
         }
@@ -145,16 +143,15 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         
                         Path filePath = decryptedDir.resolve((Path) event.context());
                         
-//                        String file = filePath.getFileName().toString();
-//                        System.out.println("New File found: " + file);
-                        System.out.println("Processing " + filePath.getFileName().toString() + "...");
+                        LOG.info("Processing " + filePath.getFileName().toString() + "...");
                         
                         Path path = Paths.get(decryptedDir.toUri());
                         
                         //process file
                         Path newFile = (Path) event.context();
                         Path fullPath = path.resolve(newFile);
-                        File file = fullPath.toFile();
+//                        File file = fullPath.toFile();
+                        
                         // process the file
                         List<String> lines = Files.readAllLines(fullPath);
                         List<String> updatedLines = lines.stream()
@@ -171,36 +168,35 @@ public class H2HFormatterApplication implements CommandLineRunner{
                                 })
                                 .collect(Collectors.toList());
                         Files.write(fullPath, updatedLines);
-                        // move the file to the processed directory
-                        Files.move(fullPath, Paths.get(processedDir, newFile.toString()));
-                        System.out.println("Processed " + filePath.getFileName().toString());
+                        Files.move(fullPath, Paths.get(processedDir, newFile.toString())); // move the file to the processed directory
+                        LOG.info("Processed " + filePath.getFileName().toString());
                     }
                 }
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
         	e.printStackTrace();
-            System.out.println("Watch Service for decrypted files closed, stopping listening for decrypted files.");
+            LOG.error("Watch Service for decrypted files closed, stopping listening for decrypted files.");
         } catch (IOException e) {
-			System.out.println("Error in processing file.");
 			e.printStackTrace();
+			LOG.error("Error in processing file.");
 		}
     }
     
     @Scheduled(fixedRate = 1000)
     public void listenForProcessedFiles() throws InterruptedException {
-    	if(!shouldRun) return; // Use this to stop listening
-        if(processedFilesWatchService == null){
+    	if (!shouldRun) return; // Use this to stop listening
+        if (processedFilesWatchService == null) {
         	try {
                 Path dir = Paths.get(processedDir);
                 processedFilesWatchService = ProcessedFilesWatchService.getInstance();
                 dir.register(processedFilesWatchService, StandardWatchEventKinds.ENTRY_CREATE);
-                System.out.println("Watch service for processed files started.");
-                System.out.println("Listening for processed files in " + processedDir);
+                LOG.info("Watch service for processed files started.");
+                LOG.info("Listening for processed files in " + processedDir);
                 importPublicKey();
             } catch (IOException e) {
-                System.err.println("Error initializing Watch Service for processed files: " + e.getMessage());
-                System.out.println("Terminate H2H File Formatter.");
+                LOG.error("Error initializing Watch Service for processed files: " + e.getMessage());
+                LOG.info("Terminate H2H File Formatter.");
 			    System.exit(1);
             }
         }
@@ -210,12 +206,11 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 for (WatchEvent<?> event : key.pollEvents()) {
                     if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE) {
                         Path processedDir = (Path)key.watchable();
-//                        System.out.println("Directory being watched: " + inputFileDir);
                         
                         Path filePath = processedDir.resolve((Path) event.context());
                         
                         String file = filePath.getFileName().toString();
-                        System.out.println("New File found: " + file);
+                        LOG.info("New File found: " + file);
                         
                         encryptFile(filePath);
                     }
@@ -223,12 +218,12 @@ public class H2HFormatterApplication implements CommandLineRunner{
                 key.reset();
             }
         } catch (ClosedWatchServiceException e) {
-            System.out.println("Watch Service for processed files closed, stopping listening for processed files.");
+            LOG.error("Watch Service for processed files closed, stopping listening for processed files.");
         }
     }
     
     public void importPrivateKey() {
-    	System.out.println("Import GPG Private Key");
+    	LOG.info("Import GPG Private Key");
 		String importPrivateKey = "gpg --import " + gpgKeyDir + separator + privateKey;
 		
 		try {
@@ -236,22 +231,20 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			
 			importPrivateKeyProcess.waitFor();
 			if (importPrivateKeyProcess.exitValue() == 0) {
-			    System.out.println("Private Key Imported.");
+			    LOG.info("Private Key Imported.");
 			} else {
-			    System.out.println("Private Key Import Failed.");
-			    System.out.println("Terminate H2H File Formatter.");
+			    LOG.error("Private Key Import Failed.");
+			    LOG.info("Terminate H2H File Formatter.");
 			    System.exit(1);
 			}
-
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
     }
     
     public void importPublicKey() {
-    	System.out.println("Import GPG Public Key");
+    	LOG.info("Import GPG Public Key");
     	String importPublicKey = "gpg --import " + gpgKeyDir + separator + publicKey;
 		
 		try {
@@ -259,15 +252,13 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			
 			importPublicKeyProcess.waitFor();
 			if (importPublicKeyProcess.exitValue() == 0) {
-			    System.out.println("Public Key Imported.");
+			    LOG.info("Public Key Imported.");
 			} else {
-			    System.out.println("Public Key Import Failed.");
-			    System.out.println("Terminate H2H File Formatter.");
+			    LOG.error("Public Key Import Failed.");
+			    LOG.info("Terminate H2H File Formatter.");
 			    System.exit(1);
 			}
-
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -279,9 +270,9 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			Files.copy(file, backupPath, StandardCopyOption.REPLACE_EXISTING);
 			decryptFile(file);
 		} catch (IOException e) {
-			System.out.println(file.getFileName().toString() + " backup failed.");
+			LOG.error(file.getFileName().toString() + " backup failed.");
 			e.printStackTrace();
-			System.out.println("Terminate H2H File Formatter.");
+			LOG.info("Terminate H2H File Formatter.");
 		    System.exit(1);
 		}
 	}
@@ -290,7 +281,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		try {
             Files.delete(file);
         } catch (IOException e) {
-            System.out.println("Unable to delete " + file.getFileName().toString() + " " + e.getMessage());
+            LOG.error("Unable to delete " + file.getFileName().toString() + " " + e.getMessage());
         }
 	}
 	
@@ -304,32 +295,28 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		try {
 			decryptFile = Runtime.getRuntime().exec(command);
 			
-			// Redirect standard error output to a stream
-			BufferedReader errorReader = new BufferedReader(new InputStreamReader(decryptFile.getErrorStream()));
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(decryptFile.getErrorStream()));// Redirect standard error output to a stream
 
 			StringBuilder errorMessage = new StringBuilder();
 			String line;
 			while ((line = errorReader.readLine()) != null) {
 			    errorMessage.append(line).append("\n");
 			}
-
-			// Wait for the process to complete
-			decryptFile.waitFor();
+			
+			decryptFile.waitFor();// Wait for the process to complete
 
 			if (decryptFile.exitValue() == 0) {
-				System.out.println("Decryption successful");
-				System.out.println("Deleting " + file.getFileName().toString());
+				LOG.info("Decryption successful");
+				LOG.info("Deleting " + file.getFileName().toString());
 				deleteFile(file);
 			} else {
-			    System.out.println("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
-			    LOG.info("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
+			    LOG.warn("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
 			    Path backUpDir = Paths.get(backupDir);
 			    file = backUpDir.resolve(file.getFileName().toString());
 			    deleteFile(file);
 			    LOG.info("Deleted " + file.getFileName().toString() + " from " + file.getParent());
 			}
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -338,16 +325,15 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		String suffix = ".gpg";
 		String encryptedFileName = file.getFileName().toString() + suffix;
         String encryptedFilePath = outputDir + separator + encryptedFileName;
-        recipient = "gpborla@gmail.com"; //temporary solultion
-//		System.out.println("EMAIL: " + recipient);
+        recipient = "gpborla@gmail.com"; //temporary solution
+//		LOG.info("EMAIL: " + recipient);
         String command = "gpg --trust-model always --encrypt -r " + recipient + " --output \"" + encryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
-//        System.out.println("encryption: " + command);
+//        LOG.info("encryption: " + command);
 		Process encryptFile;
 		try {
 			encryptFile = Runtime.getRuntime().exec(command);
 			
-			// Redirect standard error output to a stream
-			BufferedReader errorReader = new BufferedReader(new InputStreamReader(encryptFile.getErrorStream()));
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(encryptFile.getErrorStream())); // Redirect standard error output to a stream
 
 			StringBuilder errorMessage = new StringBuilder();
 			String line;
@@ -355,27 +341,23 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			    errorMessage.append(line).append("\n");
 			}
 
-			// Wait for the process to complete
-			encryptFile.waitFor();
-
+			encryptFile.waitFor();// Wait for the process to complete
 			if (encryptFile.exitValue() == 0) {
-				System.out.println("Encryption successful");
-				System.out.println("Deleting " + file.getFileName().toString());
+				LOG.info("Encryption successful");
+				LOG.info("Deleting " + file.getFileName().toString());
 				deleteFile(file);
 			} else {
-				System.out.println("Encryption failed with exit code " + encryptFile.exitValue() + " and error message:\n" + errorMessage);
-				System.out.println("Terminate H2H File Formatter.");
+				LOG.error("Encryption failed with exit code " + encryptFile.exitValue() + " and error message:\n" + errorMessage);
+				LOG.info("Terminate H2H File Formatter.");
 			    System.exit(1);
 			}
 		} catch (IOException | InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
 
 	public static void main(String[] args) {
 		SpringApplication.run(H2HFormatterApplication.class, args);
-		System.out.println("H2H File Formatter Started.");
 		LOG.info("H2H File Formatter Started.");
 	}
 
