@@ -169,7 +169,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                                 .collect(Collectors.toList());
                         Files.write(fullPath, updatedLines);
                         Files.move(fullPath, Paths.get(processedDir, newFile.toString())); // move the file to the processed directory
-                        LOG.info("Processed " + filePath.getFileName().toString());
+                        LOG.info(" Processed " + filePath.getFileName().toString());
                     }
                 }
                 key.reset();
@@ -210,7 +210,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         Path filePath = processedDir.resolve((Path) event.context());
                         
                         String file = filePath.getFileName().toString();
-                        LOG.info("New File found: " + file);
+                        LOG.info("Processed File found: " + file);
                         
                         encryptFile(filePath);
                     }
@@ -223,45 +223,55 @@ public class H2HFormatterApplication implements CommandLineRunner{
     }
     
     public void importPrivateKey() {
-    	LOG.info("Import GPG Private Key");
-		String importPrivateKey = "gpg --import " + gpgKeyDir + separator + privateKey;
-		
+    	LOG.info("Import GPG Private Key: " + privateKey);
+    	String importPrivateKey = "gpg --import " + gpgKeyDir + separator + privateKey;
+    	
 		try {
 			Process importPrivateKeyProcess = Runtime.getRuntime().exec(importPrivateKey);
-			
 			importPrivateKeyProcess.waitFor();
+			
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(importPrivateKeyProcess.getErrorStream()));// Redirect standard error output to a stream
+
+			StringBuilder errorMessage = new StringBuilder();
+			String line;
+			while ((line = errorReader.readLine()) != null) {
+			    errorMessage.append(line).append("\n");
+			}
+			
 			if (importPrivateKeyProcess.exitValue() == 0) {
 			    LOG.info("Private Key Imported.");
 			} else {
-			    LOG.error("Private Key Import Failed.");
-			    LOG.info("Terminate H2H File Formatter.");
-			    System.exit(1);
+			    LOG.warn("Message:\n" + errorMessage);
 			}
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
-		
     }
     
     public void importPublicKey() {
-    	LOG.info("Import GPG Public Key");
+    	LOG.info("Import GPG Public Key: " + publicKey);
     	String importPublicKey = "gpg --import " + gpgKeyDir + separator + publicKey;
 		
 		try {
 			Process importPublicKeyProcess = Runtime.getRuntime().exec(importPublicKey);
-			
 			importPublicKeyProcess.waitFor();
+			
+			BufferedReader errorReader = new BufferedReader(new InputStreamReader(importPublicKeyProcess.getErrorStream()));// Redirect standard error output to a stream
+
+			StringBuilder errorMessage = new StringBuilder();
+			String line;
+			while ((line = errorReader.readLine()) != null) {
+			    errorMessage.append(line).append("\n");
+			}
+			
 			if (importPublicKeyProcess.exitValue() == 0) {
 			    LOG.info("Public Key Imported.");
 			} else {
-			    LOG.error("Public Key Import Failed.");
-			    LOG.info("Terminate H2H File Formatter.");
-			    System.exit(1);
+			    LOG.warn("Message:\n" + errorMessage);
 			}
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
 		}
-		
     }
 
 	public void backupFile(Path file) {
@@ -283,17 +293,20 @@ public class H2HFormatterApplication implements CommandLineRunner{
         } catch (IOException e) {
             LOG.error("Unable to delete " + file.getFileName().toString() + " " + e.getMessage());
         }
+		LOG.info(" Deleted " + file.toAbsolutePath());
 	}
 	
 	public void decryptFile(Path file) {
 		String decryptedFileName = file.getFileName().toString().replace(".gpg", "");
         String decryptedFilePath = decryptedDir + separator + decryptedFileName;
 		
-        String command = "gpg --decrypt --output \"" + decryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
+        String command = "gpg --verbose --decrypt --output " + decryptedFilePath + " " + file.toAbsolutePath();
+        LOG.debug("COMMAND: " + command);
         
 		Process decryptFile;
 		try {
 			decryptFile = Runtime.getRuntime().exec(command);
+			decryptFile.waitFor();// Wait for the process to complete
 			
 			BufferedReader errorReader = new BufferedReader(new InputStreamReader(decryptFile.getErrorStream()));// Redirect standard error output to a stream
 
@@ -302,19 +315,17 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			while ((line = errorReader.readLine()) != null) {
 			    errorMessage.append(line).append("\n");
 			}
-			
-			decryptFile.waitFor();// Wait for the process to complete
 
 			if (decryptFile.exitValue() == 0) {
 				LOG.info("Decryption successful");
-				LOG.info("Deleting " + file.getFileName().toString());
+				LOG.info("Deleting " + file.toAbsolutePath());
 				deleteFile(file);
 			} else {
 			    LOG.warn("Decryption failed with exit code " + decryptFile.exitValue() + " and error message:\n" + errorMessage);
 			    Path backUpDir = Paths.get(backupDir);
 			    file = backUpDir.resolve(file.getFileName().toString());
 			    deleteFile(file);
-			    LOG.info("Deleted " + file.getFileName().toString() + " from " + file.getParent());
+//			    LOG.info("Deleted " + file.getFileName().toString() + " from " + file.getParent());
 			}
 		} catch (IOException | InterruptedException e) {
 			e.printStackTrace();
@@ -325,13 +336,16 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		String suffix = ".gpg";
 		String encryptedFileName = file.getFileName().toString() + suffix;
         String encryptedFilePath = outputDir + separator + encryptedFileName;
+        
         recipient = "gpborla@gmail.com"; //temporary solution
 //		LOG.info("EMAIL: " + recipient);
-        String command = "gpg --trust-model always --encrypt -r " + recipient + " --output \"" + encryptedFilePath + "\" \"" + file.toAbsolutePath() + "\"";
-//        LOG.info("encryption: " + command);
+        String command = "gpg --verbose --trust-model always --encrypt -r " + recipient + " --output " + encryptedFilePath + " " + file.toAbsolutePath();
+        LOG.debug("COMMAND: " + command);
+        
 		Process encryptFile;
 		try {
 			encryptFile = Runtime.getRuntime().exec(command);
+			encryptFile.waitFor();// Wait for the process to complete
 			
 			BufferedReader errorReader = new BufferedReader(new InputStreamReader(encryptFile.getErrorStream())); // Redirect standard error output to a stream
 
@@ -340,11 +354,10 @@ public class H2HFormatterApplication implements CommandLineRunner{
 			while ((line = errorReader.readLine()) != null) {
 			    errorMessage.append(line).append("\n");
 			}
-
-			encryptFile.waitFor();// Wait for the process to complete
+			
 			if (encryptFile.exitValue() == 0) {
 				LOG.info("Encryption successful");
-				LOG.info("Deleting " + file.getFileName().toString());
+				LOG.info("Deleting " + file.toAbsolutePath());
 				deleteFile(file);
 			} else {
 				LOG.error("Encryption failed with exit code " + encryptFile.exitValue() + " and error message:\n" + errorMessage);
