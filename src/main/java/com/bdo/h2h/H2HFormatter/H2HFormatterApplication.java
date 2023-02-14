@@ -156,8 +156,14 @@ public class H2HFormatterApplication implements CommandLineRunner{
                         List<String> lines = Files.readAllLines(fullPath);
                         List<String> updatedLines = lines.stream()
                                 .map(line -> {
-                                    if (line.startsWith("D") && line.split("\\|").length < 25) {
-                                        int difference = 24 - (line.split("\\|").length - 1);
+                                    if (line.startsWith("D")) {
+                                    	int pipeCount = 0;
+                                    	for(int i = 0; i < line.length(); i++) {
+                                    		if (line.charAt(i) == '|')
+                                    			pipeCount++;
+                                    	}
+                                    	
+                                        int difference = 24 - pipeCount;
                                         StringBuilder sb = new StringBuilder(line);
                                         for (int i = 0; i < difference; i++) {
                                             sb.append("|");
