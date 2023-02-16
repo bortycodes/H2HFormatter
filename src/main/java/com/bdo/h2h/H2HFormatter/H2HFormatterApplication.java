@@ -48,15 +48,15 @@ public class H2HFormatterApplication implements CommandLineRunner{
     @Value("${gpg.recipient")
     private String recipient;
     
-    @Value("${input.dir}")
+    @Value("${dir.input}")
     private String inputDir;
-    @Value("${backup.dir}")
+    @Value("${dir.backup}")
     private String backupDir;
-    @Value("${decrypted.dir}")
+    @Value("${dir.decrypted}")
     private String decryptedDir;
-    @Value("${processed.dir}")
+    @Value("${dir.processed}")
     private String processedDir;
-    @Value("${output.dir}")
+    @Value("${dir.output}")
     private String outputDir;
     
     private String separator = File.separator;
