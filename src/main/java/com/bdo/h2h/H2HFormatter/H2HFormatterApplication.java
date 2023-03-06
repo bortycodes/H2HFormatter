@@ -43,7 +43,7 @@ public class H2HFormatterApplication implements CommandLineRunner{
     private String publicKey;
     @Value("${gpg.key.private}")
     private String privateKey;
-    @Value("${gpg.recipient")
+    @Value("${gpg.recipient}")
     private String recipient;
     
     @Value("${dir.input}")
@@ -351,8 +351,6 @@ public class H2HFormatterApplication implements CommandLineRunner{
 		String encryptedFileName = file.getFileName().toString() + suffix;
         String encryptedFilePath = outputDir + separator + encryptedFileName;
         
-        recipient = "gpborla@gmail.com"; //temporary solution
-//		LOG.info("EMAIL: " + recipient);
         String command = "gpg --verbose --trust-model always --encrypt -r " + recipient + " --output " + encryptedFilePath + " " + file.toAbsolutePath();
         LOG.debug("ENCRYPT COMMAND: " + command);
         
