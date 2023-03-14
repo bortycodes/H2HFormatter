@@ -1,0 +1,113 @@
+SELECT    DISTINCT TO_CHAR(DECODE(ROLE, 1, TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL), 1, 1) || '-' || ROLES), 
+                                      2, TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL), 1, 1) || '-' || ROLES), 
+                                      3, TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL), 1, 1) || '-' || ROLES),
+                                      'ANY-'||ROLES)) "ROLES" 
+                ,TO_CHAR(DECODE(ROLE,1,TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, level),1,1)),
+                                     2,TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, level),1,1)),
+                                     3,TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, level),1,1)),
+                                      'ANY')) "CLASS"
+                , ROLE 
+FROM    (SELECT 'A'||NVL(COUNT_A,0)||
+              'B'||NVL(COUNT_B,0)||
+              'C'||NVL(COUNT_C,0)||
+              'D'||NVL(COUNT_D,0)||
+              'E'||NVL(COUNT_E,0)||
+              'F'||NVL(COUNT_F,0)||
+              'G'||NVL(COUNT_G,0)||
+              'H'||NVL(COUNT_H,0)||
+              'I'||NVL(COUNT_I,0)||
+              'J'||NVL(COUNT_J,0)||
+              'K'||NVL(COUNT_K,0)||
+              'L'||NVL(COUNT_L,0)||
+              'M'||NVL(COUNT_M,0)||
+              'N'||NVL(COUNT_N,0)||
+              'O'||NVL(COUNT_O,0)||
+              'P'||NVL(COUNT_P,0)||
+              'Q'||NVL(COUNT_Q,0)||
+              'R'||NVL(COUNT_R,0)||
+              'S'||NVL(COUNT_S,0)||
+              'T'||NVL(COUNT_T,0)||
+              'U'||NVL(COUNT_U,0)||
+              'V'||NVL(COUNT_V,0)||
+              'W'||NVL(COUNT_W,0)||
+              'X'||NVL(COUNT_X,0)||
+              'Y'||NVL(COUNT_Y,0)||
+              'Z'||NVL(COUNT_Z,0) CLASS_COUNT
+              ,ROLE
+              ,ROW_SILO, 
+              CASE WHEN ROLE = 0 THEN 'MAKER' 
+              WHEN ROLE = 1 THEN 'VERIFIER' 
+              WHEN ROLE = 2 THEN 'AUTHORIZER' 
+              WHEN ROLE = 3 THEN 'RELEASER' 
+              WHEN ROLE = 4 THEN 'VIEWER' 
+              WHEN ROLE = 5 THEN 'MULTIROLE' 
+              WHEN ROLE = 6 THEN 'SYSAD' 
+              WHEN ROLE = 7 THEN 'SYSADENC' 
+              WHEN ROLE = 8 THEN 'SYSADAPP' 
+              END  AS "ROLES" 
+      FROM  TBL_SIGNATORY_COUNT 
+      WHERE    CORP_ID IN (SELECT  ID
+                        FROM    TBL_CORPORATION
+                        WHERE   UPPER(CD) = 'R2DMMERGED2'
+                        AND     STATUS = 2)
+        AND STATUS = 2) A
+CONNECT BY REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL) IS NOT NULL
+--ORDER BY ROLE, CLASS ASC
+;
+
+--generate roles 
+  SELECT TO_CHAR(SUBSTR(ROLES, 1, INSTR(ROLES,'-',1)-1)) "OD_CLASS", ROLES "OD_ROLES", 
+  'A' || (ROWNUM + 10) OD_LEVEL, ROLE "OD_ROLE" FROM ( 
+  --'A' || TO_CHAR(DECODE(ROLE, 6, 99, 7, 99, 8, 99, (ROLE + 10))) || DECODE(CLASS, 'ANY', '', CLASS) OD_LEVEL
+  --, ROLE "OD_ROLE" FROM (
+  SELECT DISTINCT TO_CHAR(DECODE(ROLE,1,CLASS,2,CLASS,3,CLASS,'ANY') || '-' || 
+  CASE WHEN ROLE = 0 THEN 'MAKER' 
+  WHEN ROLE = 1 THEN 'VERIFIER' 
+  WHEN ROLE = 2 THEN 'AUTHORIZER' 
+  WHEN ROLE = 3 THEN 'RELEASER' 
+  WHEN ROLE = 4 THEN 'VIEWER' 
+  WHEN ROLE = 5 THEN 'MULTIROLE' 
+  WHEN ROLE = 6 THEN 'SYSAD' 
+  WHEN ROLE = 7 THEN 'SYSADENC' 
+  WHEN ROLE = 8 THEN 'SYSADAPP' 
+  END ) AS "ROLES", 
+  DECODE(ROLE, 1, TO_CHAR(CLASS), 2, TO_CHAR(CLASS), 3, TO_CHAR(CLASS), 'ANY') "CLASS", ROLE 
+  FROM TBL_CORP_GROUP_SERVICE WHERE CORP_GROUP_ID IN (SELECT ID FROM TBL_CORP_GROUP WHERE CORP_ID IN ( 
+  SELECT ID FROM TBL_CORPORATION WHERE UPPER(CD) = 'R2DMMERGED2' AND STATUS = 2)) 
+  AND CLASS IS NOT NULL
+  UNION 
+  SELECT DISTINCT TO_CHAR('ANY-'||ROLES) "ROLES",'ANY' "CLASS", ROLE 
+  FROM (SELECT DISTINCT 'MAKER' "ROLES", MAKER_RULE , 0 "ROLE" 
+  FROM TBL_TRANSACTION_MATRIX 
+  WHERE CORP_ID IN (SELECT ID FROM TBL_CORPORATION WHERE UPPER(CD) = 'R2DMMERGED2' AND STATUS = 2) AND STATUS = 2 ) A 
+  UNION 
+  SELECT DISTINCT TO_CHAR(DECODE(ROLE, 1, TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 
+  1, LEVEL), 1, 1) || '-' || ROLES), 2, TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 
+  1, LEVEL), 1, 1) || '-' || ROLES), 3, TO_CHAR(SUBSTR(REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 
+  1, LEVEL), 1, 1) || '-' || ROLES),'ANY-'||ROLES)) "ROLES", TO_CHAR(DECODE(ROLE,1,TO_CHAR(SUBSTR(REGEXP_SUBSTR( 
+  CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, level),1,1)),2,TO_CHAR(SUBSTR(REGEXP_SUBSTR( 
+  CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, level),1,1)),3,TO_CHAR(SUBSTR(REGEXP_SUBSTR( 
+  CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, level),1,1)),'ANY')) "CLASS", ROLE 
+  FROM (SELECT 'A'||NVL(COUNT_A,0)||'B'||NVL(COUNT_B,0)||'C'||NVL(COUNT_C,0)||'D'||NVL(COUNT_D,0)||'E'|| 
+  NVL(COUNT_E,0)||'F'||NVL(COUNT_F,0)||'G'||NVL(COUNT_G,0)||'H'||NVL(COUNT_H,0)||'I'||NVL(COUNT_I,0)||'J'|| 
+  NVL(COUNT_J,0)||'K'||NVL(COUNT_K,0)||'L'||NVL(COUNT_L,0)||'M'||NVL(COUNT_M,0)||'N'||NVL(COUNT_N,0)||'O'|| 
+  NVL(COUNT_O,0)||'P'||NVL(COUNT_P,0)||'Q'||NVL(COUNT_Q,0)||'R'||NVL(COUNT_R,0)||'S'||NVL(COUNT_S,0)||'T'|| 
+  NVL(COUNT_T,0)||'U'||NVL(COUNT_U,0)||'V'||NVL(COUNT_V,0)||'W'||NVL(COUNT_W,0)||'X'||NVL(COUNT_X,0)||'Y'|| 
+  NVL(COUNT_Y,0)||'Z'||NVL(COUNT_Z,0) CLASS_COUNT, ROLE, ROW_SILO, 
+  CASE WHEN ROLE = 0 THEN 'MAKER' 
+  WHEN ROLE = 1 THEN 'VERIFIER' 
+  WHEN ROLE = 2 THEN 'AUTHORIZER' 
+  WHEN ROLE = 3 THEN 'RELEASER' 
+  WHEN ROLE = 4 THEN 'VIEWER' 
+  WHEN ROLE = 5 THEN 'MULTIROLE' 
+  WHEN ROLE = 6 THEN 'SYSAD' 
+  WHEN ROLE = 7 THEN 'SYSADENC' 
+  WHEN ROLE = 8 THEN 'SYSADAPP' 
+  END  AS "ROLES" 
+  FROM TBL_SIGNATORY_COUNT 
+  WHERE 
+  CORP_ID IN (SELECT ID FROM TBL_CORPORATION WHERE UPPER(CD) = 'R2DMMERGED2' AND STATUS = 2) AND STATUS = 2 ) A 
+  --WHERE CLASS IS NOT NULL
+  CONNECT BY REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL) IS NOT NULL) 
+  --ORDER BY ROLE, CLASS ASC
+  ;
