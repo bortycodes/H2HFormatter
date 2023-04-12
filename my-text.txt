@@ -111,3 +111,18 @@ CONNECT BY REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL) IS NOT NULL
   CONNECT BY REGEXP_SUBSTR(CLASS_COUNT,'(\\D[1-9]\\d{0,4})', 1, LEVEL) IS NOT NULL) 
   --ORDER BY ROLE, CLASS ASC
   ;
+
+--restore AWS RDS
+1.Open the AWS Management Console and navigate to the RDS console.
+2. Select the database instance that you want to restore.
+3. Click on the "Instance actions" button, and select "Restore to point in time" from the dropdown menu.
+4. In the "Restore to point in time" dialog box, select the restore time to which you want to restore your database instance.
+5. Choose "Latest Restorable Time" if you want to restore your database to the latest restorable time.
+6. Select "Restore to specified time" if you want to specify a custom time to restore your database.
+7. In the "Backup retention period" dropdown, select the retention period for which you want to retain the automated backups for your restored instance.
+8. In the "Restore options" section, select "Restore DB instance to a new DB instance" if you want to create a new instance, or select "Restore DB instance" if you want to overwrite the existing instance.
+9. If you chose "Restore DB instance to a new DB instance", enter a new name for the restored instance in the "DB instance identifier" field.
+10. In the "Availability Zone" dropdown, select the availability zone where you want to launch the restored instance.
+11. Review the other settings in the "DB instance settings" section and modify them if necessary.
+12. Click on the "Restore DB instance" button to start the restore process.
+13. The restore process may take some time to complete depending on the size of your database and the restore time you specified. Once the restore process is complete, the restored instance will have the same hostname, endpoint, and port number as the original instance.
